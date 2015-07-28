@@ -111,6 +111,7 @@ void run_program(char *memory) {
 
   printf("\n");
 }
+
 int main(int argc, char *argv[]) {
   char program[MEMORY_LENGTH];
   char p[16] = {7, 7, 7, 0};
