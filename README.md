@@ -21,4 +21,4 @@ In c, we simple use follwoing code to acive this:
 
             return 0;
     }
-``
+```
