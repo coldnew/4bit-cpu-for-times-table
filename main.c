@@ -2,109 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #define BYTE_LENGTH 4
 #define BYTE_LIMIT ((1 << BYTE_LENGTH) - 1)
 #define MEMORY_LENGTH 16
 
 #define TRUNCATE_BYTE(x) ((x) % (BYTE_LIMIT + 1))
-
-#define I_HALT 0
-#define I_ADD 1
-#define I_SUB 2
-#define I_INC_R0 3
-#define I_INC_R1 4
-#define I_DEC_R0 5
-#define I_DEC_R1 6
-#define I_BELL 7
-#define I_PRINT 8
-#define I_LOAD_R0 9
-#define I_LOAD_R1 10
-#define I_STORE_0 11
-#define I_STORE_1 12
-#define I_JUMP 13
-#define I_JUMP_ZERO 14
-#define I_JUMP_NOT_ZERO 15
-
-// if defined, print "DING" instead of actually ringing a bell
-//#define FAKE_BELL
-
-void load_program(FILE *in, char *memory);
-void run_program(char *memory);
-
-int main(int argc, char *argv[]) {
-  char program[MEMORY_LENGTH];
-  FILE *in = stdin;
-
-  if (argc == 2) {
-    if ((in = fopen(argv[1], "r")) == NULL) {
-      fprintf(stderr, "couldn't open file '%s'\n", argv[1]);
-      exit(1);
-    }
-  } else if (argc > 2) {
-    fprintf(stderr, "usage: %s [filename]\n", argv[0]);
-    exit(1);
-  }
-
-  load_program(in, program);
-  run_program(program);
-
-  if (in != stdin) {
-    fclose(in);
-  }
-
-  return 0;
-}
-
-void load_program(FILE *in, char *memory) {
-  char instruct[3];
-  int instruct_idx;
-  int memory_idx;
-  int ch;
-
-  memset(memory, 0, MEMORY_LENGTH);
-
-  instruct_idx = 0;
-  memory_idx = 0;
-  while (ch = fgetc(in)) {
-    if (isdigit(ch)) {
-      instruct[instruct_idx++] = ch;
-
-      if (instruct_idx == sizeof(instruct)) {
-        fprintf(stderr, "Error: program contains codes too large for 4-bit machine\n");
-        fclose(in);
-        exit(1);
-      }
-    } else if (instruct_idx > 0) {
-      if (memory_idx == MEMORY_LENGTH) {
-        fprintf(stderr, "Error: program too big\n");
-        fclose(in);
-        exit(1);
-      }
-
-      instruct[instruct_idx] = '\0';
-      memory[memory_idx++] = atoi(instruct);
-
-      if (memory[memory_idx - 1] < 0) {
-        fprintf(stderr, "Error: program contains negative instructions\n");
-        fclose(in);
-        exit(1);
-      } else if (memory[memory_idx - 1] > BYTE_LIMIT) {
-        fprintf(stderr, "Error: program contains instructions that are too large\n");
-        fclose(in);
-        exit(1);
-      }
-
-      instruct_idx = 0;
-    }
-
-    if (ch == EOF) {
-      break;
-    }
-  }
-
-  fclose(in);
-}
 
 void run_program(char *memory) {
   int ip = 0;
@@ -113,90 +17,105 @@ void run_program(char *memory) {
   int r1 = 0;
   int operand;
 
-  do {
-    if (ip > BYTE_LIMIT) {
-      is = 0;
-    } else {
-      is = memory[ip++];
-    }
+  int pc = 0;
 
-    if (is > 7) {
-      operand = memory[ip++];
-    }
+  bool _exit = false;
+  while (!_exit) {
+    printf("mem[%d] = %d\n", pc, memory[pc]);
 
-    switch (is) {
-    case I_HALT:
+    switch (memory[pc]) {
+    case 0:
+      _exit = true;
       break;
 
-    case I_ADD:
+    case 1:
       r0 = TRUNCATE_BYTE(r0 + r1);
+      pc += 1;
       break;
 
-    case I_SUB:
+    case 2:
       r0 = TRUNCATE_BYTE(r0 - r1);
+      pc += 1;
       break;
 
-    case I_INC_R0:
+    case 3:
       r0 = TRUNCATE_BYTE(r0 + 1);
+      pc += 1;
       break;
 
-    case I_INC_R1:
+    case 4:
       r1 = TRUNCATE_BYTE(r1 + 1);
+      pc += 1;
       break;
 
-    case I_DEC_R0:
+    case 5:
       r0 = TRUNCATE_BYTE(r0 - 1);
+      pc += 1;
       break;
 
-    case I_DEC_R1:
+    case 6:
       r1 = TRUNCATE_BYTE(r1 - 1);
+      pc += 1;
       break;
 
-    case I_BELL:
-#ifdef FAKE_BELL
-      printf("DING ");
-#else
-      printf("\a");
-#endif
+    case 7:
+      printf("DING \n");
+      pc += 1;
       break;
 
-    case I_PRINT:
+    case 8:
       printf("%d ", memory[ip - 1]);
+      pc += 2;
       break;
 
-    case I_LOAD_R0:
+    case 9:
       r0 = memory[operand];
+      pc += 2;
       break;
 
-    case I_LOAD_R1:
+    case 10:
       r1 = memory[operand];
+      pc += 2;
       break;
 
-    case I_STORE_0:
+    case 11:
       memory[operand] = r0;
+      pc += 2;
       break;
 
-    case I_STORE_1:
+    case 12:
       memory[operand] = r1;
+      pc += 2;
       break;
 
-    case I_JUMP:
+    case 13:
       ip = operand;
+      pc += 2;
       break;
 
-    case I_JUMP_ZERO:
+    case 14:
       if (r0 == 0) {
         ip = operand;
       }
+      pc += 2;
       break;
 
-    case I_JUMP_NOT_ZERO:
+    case 15:
       if (r0 != 0) {
         ip = operand;
       }
+      pc += 2;
       break;
     }
-  } while (is != 0);
+  }
 
   printf("\n");
+}
+int main(int argc, char *argv[]) {
+  char program[MEMORY_LENGTH];
+  char p[16] = {7, 7, 7, 0};
+
+  run_program(p);
+
+  return 0;
 }
