@@ -176,10 +176,27 @@ void execute(char *memory) {
 }
 
 int main(int argc, char *argv[]) {
-  char program[MEMORY_LENGTH];
-  char p[16] = {7, 7, 7, 0};
+  char program[] = {
+    4, 0, 0,  // mov r1 0      ; i = 0
+              //
+              // _for_i: 3
+    4, 1, 1,  //   mov r1 1    ; j = 1
+    3, 0,     //   inc r1      ; i++
+              //
+              // _for_j: 8
+    2, 0, 1,  //   mul r1 r2   ; i * j
+    1,        //   print       ; print("R1 x R2 = Result")
+    3, 1,     //   inc r2      ; j++
+    5, 1, 10, //   cmp r2 10   ; if (j <= 10)
+    6, 0, 8,  //   bne _for_j  ;   goto _for_j
+              //
+    5, 0, 10, //   cmp r1 10   ; if (i <= 10)
+    6, 0, 3,  //   bnc _for_i  ;   goto _for_i
+              //
+    0,        //   exit        ; Exit application
+  };
 
-  execute(p);
+  execute(program);
 
   return 0;
 }
