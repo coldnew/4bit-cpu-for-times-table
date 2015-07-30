@@ -20,3 +20,59 @@ In c, we prints the times table by following code:
 #+END_SRC
 
 How do you implement a 4bit CPU for calculate times table ?
+
+
+** Registers
+
+| Register | Description                     |
+|----------+---------------------------------|
+| R1       | tmp data                        |
+| R2       | tmp data                        |
+| R3       | store ALU result (High) (0 ~ 9) |
+| R4       | store ALU result (Low)  (0 ~ 9) |
+| PC_H     | Program Counter (High)  (0 ~ 9) |
+| PC_L     | Program Counter (Low)   (0 ~ 9) |
+| Z        | Zero flag                       |
+
+** Instructions
+
+| opcode | nibble used | ASM               | Description                                     |
+|--------+-------------+-------------------+-------------------------------------------------|
+|      0 |           1 | exit              | Exit application                                |
+|      1 |           1 | print             | print("%d x %d = %d%d\n", r1, r2, r3, r4)       |
+|      2 |           1 | mul               | Calculater R1 x R2, store result to R3 and R4   |
+|      3 |           2 | inc <Rx>          | Rx += 1                                         |
+|      4 |           3 | mov <Rx> <val>    | Rx = val                                        |
+|      5 |           3 | cmp <Rx> <val>    | Compare Rx and val, set Z = 1 if the same       |
+|      6 |           3 | bne <PC_H> <PC_L> | Jump to address if Z = 1, clear flag after done |
+|      7 |             |                   |                                                 |
+|      8 |             |                   |                                                 |
+|      9 |             |                   |                                                 |
+|     10 |             |                   |                                                 |
+|     11 |             |                   |                                                 |
+|     13 |             |                   |                                                 |
+|     14 |             |                   |                                                 |
+|     15 |             |                   |                                                 |
+
+** Assembly
+
+#+BEGIN_SRC asm
+  _init:
+    mov r1 0    ; i = 0
+
+  _for_i:
+    mov r2 1    ; j = 1
+    inc r1      ; i++
+
+  _for_j:
+    mul r1 r2   ; i * j
+    print       ; print("R1 x R2 = Result")
+    inc r2      ; j++
+    cmp r2 10   ; if (j <= 10)
+    bne _for_j  ;  goto _for_j
+
+    cmp r1 10   ; if (i <= 10)
+    bne _for_i  ;  goto _for_i
+
+    exit        ; Exit application
+#+END_SRC
