@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define BYTE_LENGTH 4
 #define BYTE_LIMIT ((1 << BYTE_LENGTH) - 1)
@@ -20,101 +21,112 @@
 //   PC_H   -   Program Counter (High)
 //   Z       - flag for cmp (equal: z = 1)
 
+struct CPU {
+  char r1;
+  char r2;
+  char r3;
+  char r4;
+  char pc_h;
+  char pc_l;
+  char z;
+};
+
+// Increase pc value, if pc_l greater than 10, pc_h += 1
+struct CPU cpu_pc_add(struct CPU cpu, char val)
+{
+  cpu.pc_l += val;
+
+  if (cpu.pc_l > 9) {
+    cpu.pc_h += 1;
+    cpu.pc_l = val - 10;
+  }
+
+  return cpu;
+}
+
+// Get the real pc value
+char cpu_pc_get(struct CPU cpu)
+{
+  return (cpu.pc_h * 10 + cpu.pc_l);
+}
+
 void execute(char *memory) {
-  int ip = 0;
-  int is = 0;
-  int r0 = 0;
-  int r1 = 0;
-  int operand;
 
-  int pc = 0;
+  // create new cpu and init
+  struct CPU cpu = {
+    .r1 = 0,
+    .r2 = 0,
+    .r3 = 0,
+    .r4 = 0,
+    .pc_h = 0,
+    .pc_l = 0,
+    .z = 0
+  };
 
+  int pc = 0, tmp1 = 0, tmp2 = 0;
   bool _exit = false;
+
   while (!_exit) {
-    printf("mem[%d] = %d\n", pc, memory[pc]);
+    pc = cpu_pc_get(cpu);
+    //  printf("mem[%d] = %d, r1 = %d, r2 = %d\n", pc, memory[pc], cpu.r1, cpu.r2);
 
     switch (memory[pc]) {
     case 0:
       _exit = true;
+      printf("Exit application.\n");
       break;
 
     case 1:
-      r0 = TRUNCATE_BYTE(r0 + r1);
-      pc += 1;
+      printf("%d x %d = %d%d\n", cpu.r1, cpu.r2, cpu.r3, cpu.r4);
+      cpu = cpu_pc_add(cpu, 1);
       break;
 
     case 2:
-      r0 = TRUNCATE_BYTE(r0 - r1);
-      pc += 1;
+      tmp1 = memory[pc + 1];
+      assert((tmp1 < 2) && "Whoops, we only support r1,r2 register in INC command.");
+      if (tmp1 == 0) cpu.r1++;
+      if (tmp1 == 1) cpu.r2++;
+      cpu = cpu_pc_add(cpu, 2);
       break;
 
     case 3:
-      r0 = TRUNCATE_BYTE(r0 + 1);
-      pc += 1;
+      // NOTE: we cheat here, just made MUL command as R1 * R2
+      tmp1 = cpu.r1 * cpu.r2;
+      cpu.r3 = tmp1 / 10;
+      cpu.r4 = tmp1 % 10;
+//      printf("R3 = %d, R4 = %d, tmp1 = %d, m1 = %d, m2 = %d\n", cpu.r3, cpu.r4, tmp1, memory[pc + 1] , memory[pc + 2]);
+      cpu = cpu_pc_add(cpu, 3);
       break;
 
     case 4:
-      r1 = TRUNCATE_BYTE(r1 + 1);
-      pc += 1;
+      tmp1 = memory[pc + 1]; // rx
+      tmp2 = memory[pc + 2]; // value
+      assert((tmp1 < 2) && "Whoops, we only support r1,r2 register in MOV command.");
+      if (tmp1 == 0) cpu.r1 = tmp2;
+      if (tmp1 == 1) cpu.r2 = tmp2;
+      cpu = cpu_pc_add(cpu, 3);
       break;
 
     case 5:
-      r0 = TRUNCATE_BYTE(r0 - 1);
-      pc += 1;
+      tmp1 = memory[pc + 1]; // rx
+      tmp2 = memory[pc + 2]; // value
+      cpu.z = (tmp1 == tmp2) ? 1 : 0;
+      cpu = cpu_pc_add(cpu, 3);
+      printf("cmp %s %d\n", (tmp1 == 0)? "r1" : "r2", tmp2);
       break;
 
     case 6:
-      r1 = TRUNCATE_BYTE(r1 - 1);
-      pc += 1;
-      break;
-
-    case 7:
-      printf("DING \n");
-      pc += 1;
-      break;
-
-    case 8:
-      printf("%d ", memory[ip - 1]);
-      pc += 2;
-      break;
-
-    case 9:
-      r0 = memory[operand];
-      pc += 2;
-      break;
-
-    case 10:
-      r1 = memory[operand];
-      pc += 2;
-      break;
-
-    case 11:
-      memory[operand] = r0;
-      pc += 2;
-      break;
-
-    case 12:
-      memory[operand] = r1;
-      pc += 2;
-      break;
-
-    case 13:
-      ip = operand;
-      pc += 2;
-      break;
-
-    case 14:
-      if (r0 == 0) {
-        ip = operand;
+      tmp1 = memory[pc + 1]; // PC_H
+      tmp2 = memory[pc + 2]; // PC_L
+      if (0 == cpu.z) {
+        cpu.pc_h = tmp1;
+        cpu.pc_l = tmp2;
+        cpu.z = 0;
+//        printf("bne %d %d\n", tmp1, tmp2);
       }
-      pc += 2;
-      break;
-
-    case 15:
-      if (r0 != 0) {
-        ip = operand;
+      else {
+        cpu = cpu_pc_add(cpu, 3);
       }
-      pc += 2;
       break;
     }
   }
@@ -129,12 +141,12 @@ int main(int argc, char *argv[]) {
               //
               // _for_i: 3
     4, 1, 1,  //   mov r1 1    ; j = 1
-    3, 0,     //   inc r1      ; i++
+    2, 0,     //   inc r1      ; i++
               //
               // _for_j: 8
-    2, 0, 1,  //   mul r1 r2   ; i * j
+    3, 0, 1,  //   mul r1 r2   ; i * j
     1,        //   print       ; print("R1 x R2 = Result")
-    3, 1,     //   inc r2      ; j++
+    2, 1,     //   inc r2      ; j++
     5, 1, 10, //   cmp r2 10   ; if (j <= 10)
     6, 0, 8,  //   bne _for_j  ;   goto _for_j
               //
