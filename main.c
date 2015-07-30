@@ -20,59 +20,6 @@
 //   PC_H   -   Program Counter (High)
 //   Z       - flag for cmp (equal: z = 1)
 
-// Instructions:
-//
-//  opcode       -     description
-//       0       -
-//       1       -
-//       2       -
-//       3       -
-//       4       -
-//       5       -
-//       6       -
-//       7       -
-//       8       -
-//       9       -
-//      10       -
-//      11       -
-//      12       -
-//      13       -
-//      14       -
-//      15       -
-
-
-//  3 nibble ?
-//  MOV Rx ??
-//  ADD Rx ??
-//  MUL R1 R2
-//  INC Rx    /// Rx += 1
-//  DEC Rx    /// Rx -= 1
-//  JMP H L   /// Jump to ?
-//  Print
-//  cmp Rx ??
-//  beq H L
-//  bne H L
-
-///////
-///
-/// _INIT:
-//  mov r1 1 ; i = 1
-//
-//  _for_i:
-//  mov r2 1 ; j = 1
-//  inc r1   ; i++
-//
-//  _for_j:
-//  mul r1 r2 ; i * j
-//  print
-//  inc r2 ; j++
-//  cmp r2 9
-//  bne _for_j
-//
-//  cmp r1 9
-//  bne _for_i
-
-
 void execute(char *memory) {
   int ip = 0;
   int is = 0;
@@ -176,6 +123,7 @@ void execute(char *memory) {
 }
 
 int main(int argc, char *argv[]) {
+
   char program[] = {
     4, 0, 0,  // mov r1 0      ; i = 0
               //
