@@ -68,7 +68,7 @@ void execute(char *memory) {
 
   while (!_exit) {
     pc = cpu_pc_get(cpu);
-    printf("mem[%d] = %d, r1 = %d, r2 = %d, z = %d\n", pc, memory[pc], cpu.r1, cpu.r2, cpu.z);
+//    printf("mem[%d] = %d, r1 = %d, r2 = %d, z = %d\n", pc, memory[pc], cpu.r1, cpu.r2, cpu.z);
 
     switch (memory[pc]) {
     case 0:
@@ -119,36 +119,36 @@ void execute(char *memory) {
       if (tmp1 == 0) {
         tmp1 = cpu.r1;
       }
-      if (tmp1 == 1) {
+      else if (tmp1 == 1) {
         tmp1 = cpu.r2;
       }
 
-      if (tmp1 >= tmp2) {
+      if (tmp1 == tmp2) {
         cpu.z = 1;
-      }
-      else if (tmp1 <= tmp2) {
-        cpu.z = 2;
       }
       else {
         cpu.z = 0;
       }
 
       cpu = cpu_pc_add(cpu, 3);
-      printf("cmp %s %d, rx = %d\n", (tmp1 == 0)? "r1" : "r2", tmp2, cpu.r2);
+//      printf("cmp %s %d, rx = %d\n", (memory[pc + 1] == 0)? "r1" : "r2", tmp2, cpu.r2);
       break;
 
     case 6:
       tmp1 = memory[pc + 1]; // PC_H
       tmp2 = memory[pc + 2]; // PC_L
-      if (1 == cpu.z) {
+//      printf("CPU z = %d\n", cpu.z);
+      if (0 == cpu.z) {
         cpu.pc_h = tmp1;
         cpu.pc_l = tmp2;
-        cpu.z = 0;
-        printf("bne %d %d\n", tmp1, tmp2);
+//        printf("bne %d %d\n", tmp1, tmp2);
       }
       else {
         cpu = cpu_pc_add(cpu, 3);
       }
+//      printf("bne %d %d\n", tmp1, tmp2);
+//      printf("pc = %d, pch = %d, pcl = %d\n", cpu_pc_get(cpu),cpu.pc_h, cpu.pc_l);
+      cpu.z = 0;
       break;
     }
   }
@@ -169,11 +169,11 @@ int main(int argc, char *argv[]) {
     3, 0, 1,  //   mul r1 r2   ; i * j
     1,        //   print       ; print("R1 x R2 = Result")
     2, 1,     //   inc r2      ; j++
-    5, 1, 10,  //   cmp r2 9   ; if (j <= 9)
+    5, 1, 10, //   cmp r2 9   ; if (j <= 9)
     6, 0, 8,  //   bne _for_j  ;   goto _for_j
               //
-    5, 0, 10,  //   cmp r1 9   ; if (i <= 9)
-    6, 0, 3,  //   bnc _for_i  ;   goto _for_i
+    5, 0, 9,  //   cmp r1 9   ; if (i <= 9)
+    6, 0, 3,  //   bne _for_i  ;   goto _for_i
               //
     0,        //   exit        ; Exit application
   };
