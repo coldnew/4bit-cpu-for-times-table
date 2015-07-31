@@ -24,15 +24,15 @@ How do you implement a 4bit CPU for calculate times table ?
 
 ** Registers
 
-| Register | Description                     |
-|----------+---------------------------------|
-| R0      | tmp data                        |
-| R1      | tmp data                        |
-| R2      | store ALU result (High) (0 ~ 9) |
-| R3      | store ALU result (Low)  (0 ~ 9) |
-| PC_H     | Program Counter (High)  (0 ~ 9) |
-| PC_L     | Program Counter (Low)   (0 ~ 9) |
-| Z        | Zero flag                       |
+| Register | Description             |
+|----------+-------------------------|
+| R0       | tmp data                |
+| R1       | tmp data                |
+| R2       | store ALU result (High) |
+| R3       | store ALU result (Low)  |
+| PC_H     | Program Counter (High)  |
+| PC_L     | Program Counter (Low)   |
+| Z        | Zero flag               |
 
 ** Instructions
 
