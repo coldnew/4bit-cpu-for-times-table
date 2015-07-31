@@ -1,5 +1,8 @@
 #+TITLE: A 4bit CPU for print times table
 
+# Badge
+[[https://travis-ci.org/coldnew/4bit-cpu-for-times-table][https://travis-ci.org/coldnew/4bit-cpu-for-times-table.svg?branch=master]]
+
 In c, we prints the times table by following code:
 
 #+BEGIN_SRC c

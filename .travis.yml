@@ -1,0 +1,13 @@
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+branches:
+  only:
+    - master
+
+script:
+  - make
+  - ./bin/4bit-cpu-for-times-table
