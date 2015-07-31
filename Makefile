@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -pedantic -ansi -Wall -Wstrict-prototypes -std=c99
+CFLAGS = -pedantic -ansi -Wall -Wstrict-prototypes -std=c99 -Wno-gnu-zero-variadic-macro-arguments
 
 all:
 	mkdir -p bin
