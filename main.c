@@ -10,6 +10,20 @@
                 }                                               \
         } while (0)
 
+// registers
+enum { r0 = 0, r1, r2, r3 };
+
+// ASM
+enum {
+        _exit = 0,
+        print,
+        inc,
+        mul,
+        mov,
+        cmp,
+        blt
+};
+
 struct CPU {
         char r[4]; // r0 ~ r3
         char pc_h;
@@ -50,9 +64,9 @@ void execute(char *memory)
         };
 
         int pc = 0, tmp1 = 0, tmp2 = 0;
-        bool _exit = false;
+        bool _exit_loop = false;
 
-        while (!_exit) {
+        while (!_exit_loop) {
                 pc = cpu_pc_get(cpu);
 
                 dprintf("\n------------------------------------------------------------\n");
@@ -60,27 +74,27 @@ void execute(char *memory)
                 dprintf("r0 = %d, r1 = %d, r2 = %d, r3 = %d, z = %d\n ", cpu.r[0], cpu.r[1], cpu.r[2], cpu.r[3], cpu.z);
 
                 switch (memory[pc]) {
-                case 0:
-                        _exit = true;
+                case _exit:
+                        _exit_loop = true;
                         printf("Exit application.\n");
                         break;
 
-                case 1:
+                case print:
                         dprintf("print\n");
                         printf("%d x %d = %d\n", cpu.r[0], cpu.r[1], nibble_to_byte(cpu.r[2], cpu.r[3]));
                         cpu = cpu_pc_add(cpu, 1);
                         break;
 
-                case 2:
+                case inc:
                         tmp1 = memory[pc + 1];
-                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in INC command.");
+                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in inc command.");
                         dprintf("inc %s\n", (tmp1 == 0)? "r0" : "r1");
                         cpu.r[tmp1] += 1;
                         cpu = cpu_pc_add(cpu, 2);
                         break;
 
-                case 3:
-                        // NOTE: we cheat here, just made MUL command as R1 * R2
+                case mul:
+                        // NOTE: we cheat here, just made mul command as r1 * R2
                         dprintf("mul r0 r1\n");
                         tmp1 = cpu.r[0] * cpu.r[1];
                         cpu.r[2] = tmp1 >> 4;
@@ -88,25 +102,25 @@ void execute(char *memory)
                         cpu = cpu_pc_add(cpu, 3);
                         break;
 
-                case 4:
+                case mov:
                         tmp1 = memory[pc + 1]; // rx
                         tmp2 = memory[pc + 2]; // value
-                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in MOV command.");
+                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in mov command.");
                         dprintf("mov %s %d\n", (tmp1 == 0)? "r0" : "r1", tmp2);
                         cpu.r[tmp1] = tmp2;
                         cpu = cpu_pc_add(cpu, 3);
                         break;
 
-                case 5:
+                case cmp:
                         tmp1 = memory[pc + 1]; // rx
                         tmp2 = memory[pc + 2]; // value
-                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in CMP command.");
+                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in cmp command.");
                         dprintf("cmp %s %d\n", (tmp1 == 0)? "r0" : "r1", tmp2);
                         cpu.z = (cpu.r[tmp1] >= tmp2) ? 1 : 0;
                         cpu = cpu_pc_add(cpu, 3);
                         break;
 
-                case 6:
+                case blt:
                         dprintf("blt %d %d\n", memory[pc + 1], memory[pc + 2]);
                         if (0 == cpu.z) {
                                 cpu.pc_h = memory[pc + 1]; // PC_H
@@ -126,24 +140,22 @@ void execute(char *memory)
 int main(int argc, char *argv[]) {
 
         char program[] = {
-                //           _init:
-                4, 0, 1,  //   mov r0 1      ; i = 1
+                // _init:
+                mov, r0, 1,  // i = 1
+                // _for_i: 3
+                mov, r1, 1,  // j = 1
+                // _for_j: 6
+                mul, r0, r1, // i * j
+                print,       // print("r1 x R2 = Result")
+                inc, r1,     // j++
+                cmp, r1, 10, // if (j < 10)
+                blt, 0, 6,   //  goto _for_j
                 //
-                //            _for_i: 3
-                4, 1, 1,  //   mov r1 1    ; j = 1
+                inc, r0,     // i++
+                cmp, r0, 10, // if (i < 10)
+                blt, 0, 3,   //   goto _for_i
                 //
-                //            _for_j: 6
-                3, 0, 1,  //   mul r0 r1   ; i * j
-                1,        //   print       ; print("R1 x R2 = Result")
-                2, 1,     //   inc r1      ; j++
-                5, 1, 10, //   cmp r1 10   ; if (j < 10)
-                6, 0, 6,  //   blt _for_j  ;   goto _for_j
-                //
-                2, 0,     //   inc r0      ; i++
-                5, 0, 10, //   cmp r0 10   ; if (i < 10)
-                6, 0, 3,  //   blt _for_i  ;   goto _for_i
-                //
-                0,        //   exit        ; Exit application
+                _exit,       // Exit application
         };
 
         execute(program);
