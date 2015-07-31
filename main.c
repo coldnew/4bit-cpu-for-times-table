@@ -11,22 +11,22 @@
         } while (0)
 
 // Registers
-enum { r0 = 0, r1, r2, r3 };
+enum { R0 = 0, R1, R2, R3 };
 
 // Instruction set
 enum {
-        inc = 2, mul, // arithmetic
-        blt, cmp,     // conditions
-        mov,          // addressing mode
+        INC = 2, MUL, // arithmetic
+        BLT, CMP,     // conditions
+        MOV,          // addressing mode
 };
 
 // System calls
 enum {
-        sys_exit = 0, sys_write
+        SYS_Exit = 0, SYS_Write
 };
 
 struct CPU {
-        char r[4]; // r0 ~ r3
+        char r[4]; // R0 ~ R3
         char pc_h;
         char pc_l;
         char z;
@@ -72,56 +72,56 @@ void execute(char *memory)
 
                 dprintf("\n------------------------------------------------------------\n");
                 dprintf("PC = %d, pc[h] = %d, pc[l] = %d ", pc, cpu.pc_h, cpu.pc_l);
-                dprintf("r0 = %d, r1 = %d, r2 = %d, r3 = %d, z = %d\n ", cpu.r[0], cpu.r[1], cpu.r[2], cpu.r[3], cpu.z);
+                dprintf("R0 = %d, R1 = %d, R2 = %d, R3 = %d, Z = %d\n ", cpu.r[0], cpu.r[1], cpu.r[2], cpu.r[3], cpu.z);
 
                 switch (memory[pc]) {
-                case sys_exit:
+                case SYS_Exit:
                         _exit_loop = true;
                         printf("Exit application.\n");
                         break;
 
-                case sys_write:
-                        dprintf("sys_write\n");
+                case SYS_Write:
+                        dprintf("SYS_Write\n");
                         printf("%d x %d = %d\n", cpu.r[0], cpu.r[1], nibble_to_byte(cpu.r[2], cpu.r[3]));
                         cpu = cpu_pc_add(cpu, 1);
                         break;
 
-                case inc:
+                case INC:
                         tmp1 = memory[pc + 1];
-                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in inc command.");
-                        dprintf("inc %s\n", (tmp1 == 0)? "r0" : "r1");
+                        assert((tmp1 < 2) && "Whoops, we only support R0,R1 register in inc command.");
+                        dprintf("inc %s\n", (tmp1 == 0)? "R0" : "R1");
                         cpu.r[tmp1] += 1;
                         cpu = cpu_pc_add(cpu, 2);
                         break;
 
-                case mul:
-                        // NOTE: we cheat here, just made mul command as r1 * R2
-                        dprintf("mul r0 r1\n");
+                case MUL:
+                        // NOTE: we cheat here, just made MUL command as R1 * R2
+                        dprintf("mul R0 R1\n");
                         tmp1 = cpu.r[0] * cpu.r[1];
                         cpu.r[2] = tmp1 >> 4;
                         cpu.r[3] = tmp1 & 0x0f;
                         cpu = cpu_pc_add(cpu, 3);
                         break;
 
-                case mov:
+                case MOV:
                         tmp1 = memory[pc + 1]; // rx
                         tmp2 = memory[pc + 2]; // value
-                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in mov command.");
-                        dprintf("mov %s %d\n", (tmp1 == 0)? "r0" : "r1", tmp2);
+                        assert((tmp1 < 2) && "Whoops, we only support R0,R1 register in mov command.");
+                        dprintf("mov %s %d\n", (tmp1 == 0)? "R0" : "R1", tmp2);
                         cpu.r[tmp1] = tmp2;
                         cpu = cpu_pc_add(cpu, 3);
                         break;
 
-                case cmp:
+                case CMP:
                         tmp1 = memory[pc + 1]; // rx
                         tmp2 = memory[pc + 2]; // value
-                        assert((tmp1 < 2) && "Whoops, we only support r0,r1 register in cmp command.");
-                        dprintf("cmp %s %d\n", (tmp1 == 0)? "r0" : "r1", tmp2);
+                        assert((tmp1 < 2) && "Whoops, we only support R0,R1 register in cmp command.");
+                        dprintf("cmp %s %d\n", (tmp1 == 0)? "R0" : "R1", tmp2);
                         cpu.z = (cpu.r[tmp1] >= tmp2) ? 1 : 0;
                         cpu = cpu_pc_add(cpu, 3);
                         break;
 
-                case blt:
+                case BLT:
                         dprintf("blt %d %d\n", memory[pc + 1], memory[pc + 2]);
                         if (0 == cpu.z) {
                                 cpu.pc_h = memory[pc + 1]; // PC_H
@@ -142,21 +142,21 @@ int main(int argc, char *argv[]) {
 
         char program[] = {
                 // _init:
-                mov, r0, 1,  // i = 1
+                MOV, R0, 1,  // i = 1
                 // _for_i: 3
-                mov, r1, 1,  // j = 1
+                MOV, R1, 1,  // j = 1
                 // _for_j: 6
-                mul, r0, r1, // i * j
-                sys_write,   // print("r1 x R2 = Result")
-                inc, r1,     // j++
-                cmp, r1, 10, // if (j < 10)
-                blt, 0, 6,   //  goto _for_j
+                MUL, R0, R1, // i * j
+                SYS_Write,   // print("R1 x R2 = Result")
+                INC, R1,     // j++
+                CMP, R1, 10, // if (j < 10)
+                BLT, 0, 6,   //  goto _for_j
                 //
-                inc, r0,     // i++
-                cmp, r0, 10, // if (i < 10)
-                blt, 0, 3,   //   goto _for_i
+                INC, R0,     // i++
+                CMP, R0, 10, // if (i < 10)
+                BLT, 0, 3,   //   goto _for_i
                 //
-                sys_exit,    // Exit application
+                SYS_Exit,    // Exit application
         };
 
         execute(program);
