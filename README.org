@@ -39,9 +39,9 @@ How do you implement a 4bit CPU for calculate times table ?
 | cmd | nibble | ASM               | Description                                     |
 |-----+--------+-------------------+-------------------------------------------------|
 |   0 |      1 | exit              | Exit application                                |
-|   1 |      1 | print             | print("%d x %d = %d%d\n", r0, r1, r2, r3)       |
+|   1 |      1 | print             | print("%d x %d = %d\n", r0, r1, (r2 << 4) | r3) |
 |   2 |      2 | inc <Rx>          | Rx += 1                                         |
-|   3 |      3 | mul <Rx> <Rx>     | Calculater Rx x Rx, store result to R2 and R3 |
+|   3 |      3 | mul <Rx> <Rx>     | Calculater Rx x Rx, store result to R2 and R3   |
 |   4 |      3 | mov <Rx> <val>    | Rx = val                                        |
 |   5 |      3 | cmp <Rx> <val>    | Compare Rx and val, set Z = 1 if rx >= val      |
 |   6 |      3 | blt <PC_H> <PC_L> | Jump to address if Z = 1, clear flag after done |
