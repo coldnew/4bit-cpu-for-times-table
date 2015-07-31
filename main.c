@@ -5,8 +5,9 @@
 
 #define DEBUG 0
 #define dprintf(fmt, ...) do {                                  \
-                if (DEBUG)                                      \
-                        fprintf(stderr, fmt, ##__VA_ARGS__);    \
+                if (DEBUG) {                                    \
+                        fprintf(stdout, fmt, ##__VA_ARGS__);    \
+                }                                               \
         } while (0)
 
 struct CPU {
