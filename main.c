@@ -22,7 +22,7 @@ char nibble_to_byte(char high, char low)
         return (high << 4) | (low & 0x0f);
 }
 
-// Increase pc value, if pc_l greater than 10, pc_h += 1
+// Increase pc value, save hight 4-bit to pc_h, low 4-bit to pc_l
 struct CPU cpu_pc_add(struct CPU cpu, char val)
 {
         char tmp = nibble_to_byte(cpu.pc_h, cpu.pc_l) + val;
