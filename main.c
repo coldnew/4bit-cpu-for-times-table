@@ -10,18 +10,19 @@
                 }                                               \
         } while (0)
 
-// registers
+// Registers
 enum { r0 = 0, r1, r2, r3 };
 
-// ASM
+// Instruction set
 enum {
-        _exit = 0,
-        print,
-        inc,
-        mul,
-        mov,
-        cmp,
-        blt
+        inc = 2, mul, // arithmetic
+        blt, cmp,     // conditions
+        mov,          // addressing mode
+};
+
+// System calls
+enum {
+        sys_exit = 0, sys_write
 };
 
 struct CPU {
@@ -74,13 +75,13 @@ void execute(char *memory)
                 dprintf("r0 = %d, r1 = %d, r2 = %d, r3 = %d, z = %d\n ", cpu.r[0], cpu.r[1], cpu.r[2], cpu.r[3], cpu.z);
 
                 switch (memory[pc]) {
-                case _exit:
+                case sys_exit:
                         _exit_loop = true;
                         printf("Exit application.\n");
                         break;
 
-                case print:
-                        dprintf("print\n");
+                case sys_write:
+                        dprintf("sys_write\n");
                         printf("%d x %d = %d\n", cpu.r[0], cpu.r[1], nibble_to_byte(cpu.r[2], cpu.r[3]));
                         cpu = cpu_pc_add(cpu, 1);
                         break;
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]) {
                 mov, r1, 1,  // j = 1
                 // _for_j: 6
                 mul, r0, r1, // i * j
-                print,       // print("r1 x R2 = Result")
+                sys_write,   // print("r1 x R2 = Result")
                 inc, r1,     // j++
                 cmp, r1, 10, // if (j < 10)
                 blt, 0, 6,   //  goto _for_j
@@ -155,7 +156,7 @@ int main(int argc, char *argv[]) {
                 cmp, r0, 10, // if (i < 10)
                 blt, 0, 3,   //   goto _for_i
                 //
-                _exit,       // Exit application
+                sys_exit,    // Exit application
         };
 
         execute(program);
