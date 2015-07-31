@@ -1,4 +1,4 @@
-#+TITLE: An 4bit CPU for print times table
+#+TITLE: A 4bit CPU for print times table
 
 In c, we prints the times table by following code:
 
