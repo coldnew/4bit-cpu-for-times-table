@@ -39,7 +39,7 @@ How do you implement a 4bit CPU for calculate times table ?
 | cmd | nibble | ASM               | Description                                     |
 |-----+--------+-------------------+-------------------------------------------------|
 |   0 |      1 | exit              | Exit application                                |
-|   1 |      1 | print             | print("%d x %d = %d\n", r0, r1, (r2 << 4) | r3) |
+|   1 |      1 | print             | print "R1 x R2 = Result"                        |
 |   2 |      2 | inc <Rx>          | Rx += 1                                         |
 |   3 |      3 | mul <Rx> <Rx>     | Calculate Rx x Rx, store result to R2 and R3    |
 |   4 |      3 | mov <Rx> <val>    | Rx = val                                        |
