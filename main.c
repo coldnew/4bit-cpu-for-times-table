@@ -1,31 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include <stdbool.h>
 #include <assert.h>
 
-#define BYTE_LENGTH 4
-#define BYTE_LIMIT ((1 << BYTE_LENGTH) - 1)
-#define MEMORY_LENGTH 16
-
-#define TRUNCATE_BYTE(x) ((x) % (BYTE_LIMIT + 1))
 
 // Registers:
 //
+//   R0     -   tmp data
 //   R1     -   tmp data
-//   R2     -   tmp data
-//   R3     -   ALU result (High)
-//   R4     -   ALU result (Low)
+//   R2     -   ALU result (High)
+//   R3     -   ALU result (Low)
 //   PC_L   -   Program Counter (Low)
 //   PC_H   -   Program Counter (High)
 //   Z       - flag for cmp (equal: z = 1)
 
 struct CPU {
-  char r1;
-  char r2;
-  char r3;
-  char r4;
+  char r[4]; // r0 ~ r3
   char pc_h;
   char pc_l;
   char z;
@@ -54,10 +44,6 @@ void execute(char *memory) {
 
   // create new cpu and init
   struct CPU cpu = {
-    .r1 = 0,
-    .r2 = 0,
-    .r3 = 0,
-    .r4 = 0,
     .pc_h = 0,
     .pc_l = 0,
     .z = 0
@@ -68,7 +54,6 @@ void execute(char *memory) {
 
   while (!_exit) {
     pc = cpu_pc_get(cpu);
-//    printf("mem[%d] = %d, r1 = %d, r2 = %d, z = %d\n", pc, memory[pc], cpu.r1, cpu.r2, cpu.z);
 
     switch (memory[pc]) {
     case 0:
@@ -77,37 +62,30 @@ void execute(char *memory) {
       break;
 
     case 1:
-      printf("%d x %d = %d%d\n", cpu.r1, cpu.r2, cpu.r3, cpu.r4);
+      printf("%d x %d = %d%d\n", cpu.r[0], cpu.r[1], cpu.r[2], cpu.r[3]);
       cpu = cpu_pc_add(cpu, 1);
       break;
 
     case 2:
       tmp1 = memory[pc + 1];
       assert((tmp1 < 2) && "Whoops, we only support r1,r2 register in INC command.");
-      if (tmp1 == 0) cpu.r1++;
-      if (tmp1 == 1) cpu.r2++;
-//      printf("inc %s\n", (tmp1 == 0) ? "r1" : "r2");
+      cpu.r[tmp1] += 1;
       cpu = cpu_pc_add(cpu, 2);
       break;
 
     case 3:
       // NOTE: we cheat here, just made MUL command as R1 * R2
-      tmp1 = cpu.r1 * cpu.r2;
-      cpu.r3 = tmp1 / 10;
-      cpu.r4 = tmp1 % 10;
-//      printf("R3 = %d, R4 = %d, tmp1 = %d, m1 = %d, m2 = %d\n", cpu.r3, cpu.r4, tmp1, memory[pc + 1] , memory[pc + 2]);
-//      printf("PC = %d, PC_H = %d, PC_L = %d\n", cpu_pc_get(cpu), cpu.pc_h, cpu.pc_l);
+      tmp1 = cpu.r[0] * cpu.r[1];
+      cpu.r[2] = tmp1 / 10;
+      cpu.r[3] = tmp1 % 10;
       cpu = cpu_pc_add(cpu, 3);
-//      printf("PC = %d, PC_H = %d, PC_L = %d\n", cpu_pc_get(cpu), cpu.pc_h, cpu.pc_l);
       break;
 
     case 4:
       tmp1 = memory[pc + 1]; // rx
       tmp2 = memory[pc + 2]; // value
       assert((tmp1 < 2) && "Whoops, we only support r1,r2 register in MOV command.");
-      if (tmp1 == 0) cpu.r1 = tmp2;
-      if (tmp1 == 1) cpu.r2 = tmp2;
-      printf("mov %s %d\n", ((tmp1 == 0) ? "r1" : "r2") , tmp2);
+      cpu.r[tmp1] = tmp2;
       cpu = cpu_pc_add(cpu, 3);
       break;
 
@@ -115,15 +93,9 @@ void execute(char *memory) {
       tmp1 = memory[pc + 1]; // rx
       tmp2 = memory[pc + 2]; // value
       cpu.z = (tmp1 == tmp2) ? 1 : 0;
+      assert((tmp1 < 2) && "Whoops, we only support r1,r2 register in CMP command.");
 
-      if (tmp1 == 0) {
-        tmp1 = cpu.r1;
-      }
-      else if (tmp1 == 1) {
-        tmp1 = cpu.r2;
-      }
-
-      if (tmp1 == tmp2) {
+      if (cpu.r[tmp1] == tmp2) {
         cpu.z = 1;
       }
       else {
@@ -131,23 +103,18 @@ void execute(char *memory) {
       }
 
       cpu = cpu_pc_add(cpu, 3);
-//      printf("cmp %s %d, rx = %d\n", (memory[pc + 1] == 0)? "r1" : "r2", tmp2, cpu.r2);
       break;
 
     case 6:
       tmp1 = memory[pc + 1]; // PC_H
       tmp2 = memory[pc + 2]; // PC_L
-//      printf("CPU z = %d\n", cpu.z);
       if (0 == cpu.z) {
         cpu.pc_h = tmp1;
         cpu.pc_l = tmp2;
-//        printf("bne %d %d\n", tmp1, tmp2);
       }
       else {
         cpu = cpu_pc_add(cpu, 3);
       }
-//      printf("bne %d %d\n", tmp1, tmp2);
-//      printf("pc = %d, pch = %d, pcl = %d\n", cpu_pc_get(cpu),cpu.pc_h, cpu.pc_l);
       cpu.z = 0;
       break;
     }

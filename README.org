@@ -26,10 +26,10 @@ How do you implement a 4bit CPU for calculate times table ?
 
 | Register | Description                     |
 |----------+---------------------------------|
-| R1       | tmp data                        |
-| R2       | tmp data                        |
-| R3       | store ALU result (High) (0 ~ 9) |
-| R4       | store ALU result (Low)  (0 ~ 9) |
+| R0      | tmp data                        |
+| R1      | tmp data                        |
+| R2      | store ALU result (High) (0 ~ 9) |
+| R3      | store ALU result (Low)  (0 ~ 9) |
 | PC_H     | Program Counter (High)  (0 ~ 9) |
 | PC_L     | Program Counter (Low)   (0 ~ 9) |
 | Z        | Zero flag                       |
@@ -39,7 +39,7 @@ How do you implement a 4bit CPU for calculate times table ?
 | cmd | nibble | ASM               | Description                                     |
 |-----+--------+-------------------+-------------------------------------------------|
 |   0 |      1 | exit              | Exit application                                |
-|   1 |      1 | print             | print("%d x %d = %d%d\n", r1, r2, r3, r4)       |
+|   1 |      1 | print             | print("%d x %d = %d%d\n", r0, r1, r2, r3)       |
 |   2 |      2 | inc <Rx>          | Rx += 1                                         |
 |   3 |      3 | mul <Rx> <Rx>     | Calculater Rx x Rx, store result to R3 and R4   |
 |   4 |      3 | mov <Rx> <val>    | Rx = val                                        |
@@ -50,20 +50,20 @@ How do you implement a 4bit CPU for calculate times table ?
 
 #+BEGIN_SRC asm
   _init:
-    mov r1 0    ; i = 0
+    mov r0 0    ; i = 0
 
   _for_i:
-    mov r2 1    ; j = 1
-    inc r1      ; i++
+    mov r1 1    ; j = 1
+    inc r0      ; i++
 
   _for_j:
-    mul r1 r2   ; i * j
+    mul r0 r1   ; i * j
     print       ; print("R1 x R2 = Result")
-    inc r2      ; j++
-    cmp r2 10   ; if (j <= 10)
+    inc r1      ; j++
+    cmp r1 10   ; if (j <= 10)
     bne _for_j  ;  goto _for_j
 
-    cmp r1 10   ; if (i <= 10)
+    cmp r0 10   ; if (i <= 10)
     bne _for_i  ;  goto _for_i
 
     exit        ; Exit application
